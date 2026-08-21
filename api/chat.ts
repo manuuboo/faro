@@ -10,40 +10,17 @@ export default async function handler(req: any, res: any) {
     try {
         const { businessId } = req.body;
 
-        console.log("Business ID:", businessId);
-
-        if (!businessId) {
-            return res.status(400).json({
-                error: "Business ID is required",
-            });
-        }
-
-        const { data: business, error } = await supabaseServer
-            .from("businesses")
-            .select("*")
-            .eq("id", businessId)
-            .single();
-
-        console.log("Business:", business);
-        console.log("Supabase error:", error);
-
-        if (error) {
-            return res.status(500).json({
-                error: error.message,
-            });
-        }
-
         return res.status(200).json({
-            reply: `Supabase funciona. Negocio: ${business.business_name || business.id}`,
+            reply: `Supabase server cargó correctamente. Business ID recibido: ${businessId ? "sí" : "no"}`,
         });
     } catch (error) {
-        console.error("SUPABASE TEST ERROR:", error);
+        console.error("SUPABASE SERVER ERROR:", error);
 
         return res.status(500).json({
             error:
                 error instanceof Error
                     ? error.message
-                    : "Supabase test failed",
+                    : "Error cargando Supabase server",
         });
     }
 }
