@@ -88,6 +88,7 @@ export function useBusinessData() {
 
   const businessId = getBusinessId();
 
+
   // ── Local storage backup ─────────────────────────────────────────────────
 
   useEffect(() => {

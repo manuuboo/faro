@@ -2,14 +2,24 @@ import {
     getFaroAISettings,
 } from '../services/aiSettings';
 
+export interface GeminiAttachment {
+    type: 'image' | 'audio' | 'file';
+    name: string;
+    mimeType: string;
+    base64: string;
+}
+
 export async function askGemini(
     message: string,
-    businessId: string
+    businessId: string,
+    attachments: GeminiAttachment[] = []
 ): Promise<string> {
 
     console.log('========== ASK GEMINI ==========');
     console.log('Mensaje:', message);
     console.log('Business ID:', businessId);
+    console.log('Attachments:', attachments);
+    console.log('Cantidad de archivos:', attachments.length);
 
     const aiSettings = getFaroAISettings();
 
@@ -26,6 +36,7 @@ export async function askGemini(
             message,
             businessId,
             aiSettings,
+            attachments,
         }),
     });
 

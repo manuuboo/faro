@@ -6,7 +6,7 @@ import { categorySuggestions } from '../../data/categorySuggestions';
 
 import { askGemini } from '../../ai/gemini';
 
-import { getBusinessId } from "../../services/storage";
+import { getBusinessId } from '../../services/storage';
 
 import './ChatView.css';
 
@@ -32,7 +32,9 @@ export default function ChatView({ userData }: Props) {
     },
   ]);
 
-  const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<
+    Attachment[]
+  >([]);
 
   const [isRecording, setIsRecording] = useState(false);
 
@@ -48,7 +50,8 @@ export default function ChatView({ userData }: Props) {
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
-  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingTimerRef =
+    useRef<ReturnType<typeof setInterval> | null>(null);
 
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -57,10 +60,14 @@ export default function ChatView({ userData }: Props) {
     categorySuggestions['Other'];
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: 'smooth',
+    });
   }, [messages, status]);
 
-  // ── Bubble state class ──────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Bubble state
+  // ─────────────────────────────────────────────────────────────
 
   const getBubbleClass = () => {
     switch (status) {
@@ -88,7 +95,75 @@ export default function ChatView({ userData }: Props) {
     }
   };
 
-  // ── Send message ────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Convert attachment to Base64
+  // ─────────────────────────────────────────────────────────────
+
+  const attachmentToBase64 = async (
+    attachment: Attachment
+  ): Promise<string> => {
+    if (!attachment.url) {
+      throw new Error(
+        `El archivo ${attachment.name} no tiene URL`
+      );
+    }
+
+    const response = await fetch(attachment.url);
+
+    if (!response.ok) {
+      throw new Error(
+        `No se pudo leer el archivo ${attachment.name}`
+      );
+    }
+
+    const blob = await response.blob();
+
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        const result = reader.result;
+
+        if (typeof result !== 'string') {
+          reject(
+            new Error(
+              `No se pudo convertir ${attachment.name} a Base64`
+            )
+          );
+
+          return;
+        }
+
+        const parts = result.split(',');
+
+        if (parts.length < 2) {
+          reject(
+            new Error(
+              `Base64 inválido para ${attachment.name}`
+            )
+          );
+
+          return;
+        }
+
+        resolve(parts[1]);
+      };
+
+      reader.onerror = () => {
+        reject(
+          new Error(
+            `Error leyendo ${attachment.name}`
+          )
+        );
+      };
+
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // Send message
+  // ─────────────────────────────────────────────────────────────
 
   const handleSend = useCallback(
     async (
@@ -100,7 +175,10 @@ export default function ChatView({ userData }: Props) {
         ...extraAttachments,
       ];
 
-      if (!textToSend.trim() && allAttachments.length === 0) {
+      if (
+        !textToSend.trim() &&
+        allAttachments.length === 0
+      ) {
         return;
       }
 
@@ -119,7 +197,10 @@ export default function ChatView({ userData }: Props) {
         date: new Date().toISOString(),
       };
 
-      setMessages(prev => [...prev, userMsg]);
+      setMessages(prev => [
+        ...prev,
+        userMsg,
+      ]);
 
       setInputText('');
 
@@ -128,18 +209,117 @@ export default function ChatView({ userData }: Props) {
       setStatus('processing');
 
       try {
-        // Obtener el negocio actual
+        // ─────────────────────────────────────────────
+        // Obtener negocio actual
+        // ─────────────────────────────────────────────
+
         const businessId = getBusinessId();
 
         if (!businessId) {
-          throw new Error('No se encontró el negocio actual');
+          throw new Error(
+            'No se encontró el negocio actual'
+          );
         }
 
-        // Enviar mensaje + businessId a Faro AI
-        const response = await askGemini(
-          textToSend || '[Archivo adjunto]',
-          businessId
+        // ─────────────────────────────────────────────
+        // Preparar archivos
+        // ─────────────────────────────────────────────
+
+        console.log(
+          '========== PREPARANDO ADJUNTOS =========='
         );
+
+        const geminiAttachments =
+          await Promise.all(
+            allAttachments.map(
+              async attachment => {
+                console.log(
+                  'Procesando:',
+                  attachment.name,
+                  attachment.type,
+                  attachment.mimeType
+                );
+
+                const base64 =
+                  await attachmentToBase64(
+                    attachment
+                  );
+
+                return {
+                  type: attachment.type,
+                  name: attachment.name,
+                  mimeType:
+                    attachment.mimeType ||
+                    'application/octet-stream',
+                  base64,
+                };
+              }
+            )
+          );
+
+        console.log(
+          'Adjuntos preparados:',
+          geminiAttachments.map(
+            attachment => ({
+              type: attachment.type,
+              name: attachment.name,
+              mimeType:
+                attachment.mimeType,
+              base64Length:
+                attachment.base64.length,
+            })
+          )
+        );
+
+        // ─────────────────────────────────────────────
+        // Texto automático cuando solo hay archivo
+        // ─────────────────────────────────────────────
+
+        let messageForAI = textToSend;
+
+        if (!messageForAI.trim()) {
+          const hasAudio =
+            allAttachments.some(
+              attachment =>
+                attachment.type === 'audio'
+            );
+
+          const hasImage =
+            allAttachments.some(
+              attachment =>
+                attachment.type === 'image'
+            );
+
+          if (hasAudio) {
+            messageForAI =
+              'Transcribí este audio y analizá lo que dice. Si contiene una instrucción para Faro, ejecutala.';
+          } else if (hasImage) {
+            messageForAI =
+              'Analizá esta imagen y decime qué contiene.';
+          } else {
+            messageForAI =
+              'Analizá el archivo adjunto.';
+          }
+        }
+
+        // ─────────────────────────────────────────────
+        // Enviar a Faro
+        // ─────────────────────────────────────────────
+
+        console.log(
+          '========== ENVIANDO A FARO =========='
+        );
+
+        const response = await askGemini(
+          messageForAI,
+          businessId,
+          geminiAttachments
+        );
+
+        window.dispatchEvent(new Event('faro:data-updated'));
+        // ─────────────────────────────────────────────
+        // Respuesta de Faro
+        // ─────────────────────────────────────────────
 
         setMessages(prev => [
           ...prev,
@@ -151,7 +331,10 @@ export default function ChatView({ userData }: Props) {
           },
         ]);
       } catch (error) {
-        console.error('Faro AI error:', error);
+        console.error(
+          'Faro AI error:',
+          error
+        );
 
         setMessages(prev => [
           ...prev,
@@ -160,9 +343,12 @@ export default function ChatView({ userData }: Props) {
             sender: 'faro',
             text:
               error instanceof Error &&
-                error.message === 'No se encontró el negocio actual'
+                error.message ===
+                'No se encontró el negocio actual'
                 ? 'No pude identificar tu negocio actual. Volvé a ingresar al dashboard e intentá nuevamente.'
-                : 'Tuve un problema al conectarme. Verificá que el servidor esté activo e intentá de nuevo.',
+                : error instanceof Error
+                  ? `No pude procesar el archivo: ${error.message}`
+                  : 'Tuve un problema al procesar el archivo. Verificá que el servidor esté activo e intentá de nuevo.',
             date: new Date().toISOString(),
           },
         ]);
@@ -170,10 +356,16 @@ export default function ChatView({ userData }: Props) {
         setStatus('idle');
       }
     },
-    [inputText, pendingAttachments, status]
+    [
+      inputText,
+      pendingAttachments,
+      status,
+    ]
   );
 
-  // ── Audio recording ─────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Audio recording
+  // ─────────────────────────────────────────────────────────────
 
   const startRecording = async () => {
     try {
@@ -182,9 +374,11 @@ export default function ChatView({ userData }: Props) {
           audio: true,
         });
 
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder =
+        new MediaRecorder(stream);
 
-      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorderRef.current =
+        mediaRecorder;
 
       audioChunksRef.current = [];
 
@@ -194,13 +388,16 @@ export default function ChatView({ userData }: Props) {
 
       setRecordingTime(0);
 
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(t => t + 1);
-      }, 1000);
+      recordingTimerRef.current =
+        setInterval(() => {
+          setRecordingTime(t => t + 1);
+        }, 1000);
 
       mediaRecorder.ondataavailable = e => {
         if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
+          audioChunksRef.current.push(
+            e.data
+          );
         }
       };
 
@@ -208,42 +405,74 @@ export default function ChatView({ userData }: Props) {
         const blob = new Blob(
           audioChunksRef.current,
           {
-            type: 'audio/webm',
+            type:
+              mediaRecorder.mimeType ||
+              'audio/webm',
           }
         );
 
-        const url = URL.createObjectURL(blob);
+        const url =
+          URL.createObjectURL(blob);
 
         const attachment: Attachment = {
           id: crypto.randomUUID(),
+
           type: 'audio',
+
           name: `Audio_${new Date().toLocaleTimeString()}.webm`,
+
           size: blob.size,
+
           url,
-          mimeType: 'audio/webm',
+
+          mimeType:
+            mediaRecorder.mimeType ||
+            'audio/webm',
+
           duration: recordingTime,
         };
 
-        handleSend('', [attachment]);
+        handleSend(
+          '',
+          [attachment]
+        );
 
-        stream.getTracks().forEach(t => t.stop());
+        stream
+          .getTracks()
+          .forEach(track =>
+            track.stop()
+          );
 
         setStatus('idle');
 
         setIsRecording(false);
 
-        if (recordingTimerRef.current) {
-          clearInterval(recordingTimerRef.current);
+        if (
+          recordingTimerRef.current
+        ) {
+          clearInterval(
+            recordingTimerRef.current
+          );
+
+          recordingTimerRef.current =
+            null;
         }
       };
 
       mediaRecorder.start();
-    } catch {
+    } catch (error) {
+      console.error(
+        'Error accediendo al micrófono:',
+        error
+      );
+
       alert(
         'No se pudo acceder al micrófono. Verificá los permisos del navegador.'
       );
 
       setStatus('idle');
+
+      setIsRecording(false);
     }
   };
 
@@ -259,49 +488,88 @@ export default function ChatView({ userData }: Props) {
     }
   };
 
-  // ── File / Image attach ─────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // File / Image attach
+  // ─────────────────────────────────────────────────────────────
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     type: 'file' | 'image'
   ) => {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(
+      e.target.files || []
+    );
 
-    const newAttachments: Attachment[] = files.map(file => ({
-      id: crypto.randomUUID(),
-      type: type === 'image' ? 'image' : 'file',
-      name: file.name,
-      size: file.size,
-      url:
-        type === 'image'
-          ? URL.createObjectURL(file)
-          : undefined,
-      mimeType: file.type,
-    }));
+    const newAttachments: Attachment[] =
+      files.map(file => ({
+        id: crypto.randomUUID(),
 
-    setPendingAttachments(prev => [
-      ...prev,
-      ...newAttachments,
-    ]);
+        type:
+          type === 'image'
+            ? 'image'
+            : 'file',
+
+        name: file.name,
+
+        size: file.size,
+
+        url:
+          type === 'image'
+            ? URL.createObjectURL(
+              file
+            )
+            : URL.createObjectURL(
+              file
+            ),
+
+        mimeType: file.type,
+      }));
+
+    setPendingAttachments(
+      prev => [
+        ...prev,
+        ...newAttachments,
+      ]
+    );
 
     e.target.value = '';
   };
 
-  const removeAttachment = (id: string) => {
-    setPendingAttachments(prev =>
-      prev.filter(a => a.id !== id)
+  // ─────────────────────────────────────────────────────────────
+  // Remove attachment
+  // ─────────────────────────────────────────────────────────────
+
+  const removeAttachment = (
+    id: string
+  ) => {
+    setPendingAttachments(
+      prev =>
+        prev.filter(
+          attachment =>
+            attachment.id !== id
+        )
     );
   };
 
-  const formatDuration = (sec: number) => {
+  // ─────────────────────────────────────────────────────────────
+  // Format helpers
+  // ─────────────────────────────────────────────────────────────
+
+  const formatDuration = (
+    sec: number
+  ) => {
     const m = Math.floor(sec / 60);
 
     const s = sec % 60;
 
-    return `${m}:${s.toString().padStart(2, '0')}`;
+    return `${m}:${s
+      .toString()
+      .padStart(2, '0')}`;
   };
 
-  const formatFileSize = (bytes?: number) => {
+  const formatFileSize = (
+    bytes?: number
+  ) => {
     if (!bytes) return '';
 
     if (bytes < 1024) {
@@ -309,11 +577,21 @@ export default function ChatView({ userData }: Props) {
     }
 
     if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(
+        bytes / 1024
+      ).toFixed(1)} KB`;
     }
 
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    return `${(
+      bytes /
+      1024 /
+      1024
+    ).toFixed(1)} MB`;
   };
+
+  // ─────────────────────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────────────────────
 
   return (
     <div className="chat-view">
@@ -331,7 +609,6 @@ export default function ChatView({ userData }: Props) {
             />
 
             <div>
-
               <h2 className="section-title">
                 Faro AI
               </h2>
@@ -339,7 +616,6 @@ export default function ChatView({ userData }: Props) {
               <p className="faro-status-text">
                 {getStatusLabel()}
               </p>
-
             </div>
 
           </div>
@@ -382,6 +658,147 @@ export default function ChatView({ userData }: Props) {
                     className="chat-avatar"
                     aria-hidden="true"
                   >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </div>
+
+                )}
+
+                <div className="chat-bubble-content">
+
+                  {msg.text && (
+                    <p>
+                      {msg.text}
+                    </p>
+                  )}
+
+                  {msg.attachments?.map(
+                    att => (
+
+                      <div
+                        key={att.id}
+                        className="chat-attachment"
+                      >
+
+                        {/* Image */}
+
+                        {att.type ===
+                          'image' &&
+                          att.url && (
+
+                            <img
+                              src={att.url}
+                              alt={att.name}
+                              className="chat-attachment-image"
+                            />
+
+                          )}
+
+                        {/* Audio */}
+
+                        {att.type ===
+                          'audio' &&
+                          att.url && (
+
+                            <div className="chat-attachment-audio">
+
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                              </svg>
+
+                              <audio
+                                src={att.url}
+                                controls
+                                style={{
+                                  height:
+                                    '28px',
+                                  flex: 1,
+                                }}
+                              />
+
+                              <span>
+                                {att.duration
+                                  ? formatDuration(
+                                    att.duration
+                                  )
+                                  : ''}
+                              </span>
+
+                            </div>
+
+                          )}
+
+                        {/* File */}
+
+                        {att.type ===
+                          'file' && (
+
+                            <div className="chat-attachment-file">
+
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+
+                                <polyline points="14 2 14 8 20 8" />
+                              </svg>
+
+                              <span className="att-name">
+                                {att.name}
+                              </span>
+
+                              <span className="att-size">
+                                {formatFileSize(
+                                  att.size
+                                )}
+                              </span>
+
+                            </div>
+
+                          )}
+
+                      </div>
+
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
+            ))}
+
+            {status ===
+              'processing' && (
+
+                <div className="chat-message chat-message--bot">
+
+                  <div
+                    className="chat-avatar"
+                    aria-hidden="true"
+                  >
 
                     <svg
                       width="14"
@@ -396,73 +813,87 @@ export default function ChatView({ userData }: Props) {
 
                   </div>
 
-                )}
+                  <div className="chat-bubble-content chat-typing-indicator">
 
-                <div className="chat-bubble-content">
+                    <span className="dot" />
+                    <span className="dot" />
+                    <span className="dot" />
 
-                  {msg.text && (
-                    <p>{msg.text}</p>
-                  )}
+                  </div>
 
-                  {msg.attachments?.map(att => (
+                </div>
+
+              )}
+
+            {messages.length ===
+              1 && (
+
+                <div className="chat-suggestions-container">
+
+                  <p className="chat-suggestions-title">
+                    Sugerencias para tu negocio:
+                  </p>
+
+                  <div className="chat-suggestions">
+
+                    {suggestions.map(
+                      (sug, idx) => (
+
+                        <button
+                          key={idx}
+                          className="chat-suggestion-btn"
+                          onClick={() =>
+                            handleSend(
+                              sug
+                            )
+                          }
+                        >
+                          {sug}
+                        </button>
+
+                      )
+                    )}
+
+                  </div>
+
+                </div>
+
+              )}
+
+            <div
+              ref={messagesEndRef}
+            />
+
+          </div>
+
+          {/* Pending attachments */}
+
+          {pendingAttachments.length >
+            0 && (
+
+              <div className="pending-attachments">
+
+                {pendingAttachments.map(
+                  att => (
 
                     <div
                       key={att.id}
-                      className="chat-attachment"
+                      className="pending-attachment"
                     >
 
-                      {att.type === 'image' &&
-                        att.url && (
+                      {att.type ===
+                        'image' &&
+                        att.url ? (
 
-                          <img
-                            src={att.url}
-                            alt={att.name}
-                            className="chat-attachment-image"
-                          />
+                        <img
+                          src={att.url}
+                          alt={att.name}
+                          className="pending-thumb"
+                        />
 
-                        )}
+                      ) : (
 
-                      {att.type === 'audio' &&
-                        att.url && (
-
-                          <div className="chat-attachment-audio">
-
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                            </svg>
-
-                            <audio
-                              src={att.url}
-                              controls
-                              style={{
-                                height: '28px',
-                                flex: 1,
-                              }}
-                            />
-
-                            <span>
-                              {att.duration
-                                ? formatDuration(
-                                  att.duration
-                                )
-                                : ''}
-                            </span>
-
-                          </div>
-
-                        )}
-
-                      {att.type === 'file' && (
-
-                        <div className="chat-attachment-file">
+                        <div className="pending-file-icon">
 
                           <svg
                             width="16"
@@ -473,184 +904,61 @@ export default function ChatView({ userData }: Props) {
                             strokeWidth="2"
                           >
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+
                             <polyline points="14 2 14 8 20 8" />
                           </svg>
-
-                          <span className="att-name">
-                            {att.name}
-                          </span>
-
-                          <span className="att-size">
-                            {formatFileSize(att.size)}
-                          </span>
 
                         </div>
 
                       )}
 
-                    </div>
+                      <span className="pending-att-name">
+                        {att.name}
+                      </span>
 
-                  ))}
-
-                </div>
-
-              </div>
-
-            ))}
-
-            {status === 'processing' && (
-
-              <div className="chat-message chat-message--bot">
-
-                <div
-                  className="chat-avatar"
-                  aria-hidden="true"
-                >
-
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-
-                </div>
-
-                <div className="chat-bubble-content chat-typing-indicator">
-
-                  <span className="dot" />
-
-                  <span className="dot" />
-
-                  <span className="dot" />
-
-                </div>
-
-              </div>
-
-            )}
-
-            {messages.length === 1 && (
-
-              <div className="chat-suggestions-container">
-
-                <p className="chat-suggestions-title">
-                  Sugerencias para tu negocio:
-                </p>
-
-                <div className="chat-suggestions">
-
-                  {suggestions.map((sug, idx) => (
-
-                    <button
-                      key={idx}
-                      className="chat-suggestion-btn"
-                      onClick={() => handleSend(sug)}
-                    >
-                      {sug}
-                    </button>
-
-                  ))}
-
-                </div>
-
-              </div>
-
-            )}
-
-            <div ref={messagesEndRef} />
-
-          </div>
-
-          {/* Pending attachments */}
-
-          {pendingAttachments.length > 0 && (
-
-            <div className="pending-attachments">
-
-              {pendingAttachments.map(att => (
-
-                <div
-                  key={att.id}
-                  className="pending-attachment"
-                >
-
-                  {att.type === 'image' &&
-                    att.url ? (
-
-                    <img
-                      src={att.url}
-                      alt={att.name}
-                      className="pending-thumb"
-                    />
-
-                  ) : (
-
-                    <div className="pending-file-icon">
-
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                      <button
+                        className="pending-att-remove"
+                        onClick={() =>
+                          removeAttachment(
+                            att.id
+                          )
+                        }
+                        aria-label="Quitar adjunto"
                       >
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                      </svg>
+
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <line
+                            x1="18"
+                            y1="6"
+                            x2="6"
+                            y2="18"
+                          />
+
+                          <line
+                            x1="6"
+                            y1="6"
+                            x2="18"
+                            y2="18"
+                          />
+                        </svg>
+
+                      </button>
 
                     </div>
 
-                  )}
+                  )
+                )}
 
-                  <span className="pending-att-name">
-                    {att.name}
-                  </span>
+              </div>
 
-                  <button
-                    className="pending-att-remove"
-                    onClick={() =>
-                      removeAttachment(att.id)
-                    }
-                    aria-label="Quitar adjunto"
-                  >
-
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <line
-                        x1="18"
-                        y1="6"
-                        x2="6"
-                        y2="18"
-                      />
-                      <line
-                        x1="6"
-                        y1="6"
-                        x2="18"
-                        y2="18"
-                      />
-                    </svg>
-
-                  </button>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          )}
+            )}
 
           {/* Input shell */}
 
@@ -660,13 +968,17 @@ export default function ChatView({ userData }: Props) {
 
             <div className="chat-input-tools">
 
+              {/* Microphone */}
+
               <button
                 type="button"
                 className={`chat-tool-btn${isRecording
                   ? ' chat-tool-btn--recording'
                   : ''
                   }`}
-                onClick={handleMicClick}
+                onClick={
+                  handleMicClick
+                }
                 aria-label={
                   isRecording
                     ? 'Detener grabación'
@@ -711,13 +1023,16 @@ export default function ChatView({ userData }: Props) {
                     strokeLinejoin="round"
                   >
                     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+
                     <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+
                     <line
                       x1="12"
                       y1="19"
                       x2="12"
                       y2="23"
                     />
+
                     <line
                       x1="8"
                       y1="23"
@@ -729,6 +1044,8 @@ export default function ChatView({ userData }: Props) {
                 )}
 
               </button>
+
+              {/* Image */}
 
               <button
                 type="button"
@@ -757,15 +1074,19 @@ export default function ChatView({ userData }: Props) {
                     height="18"
                     rx="2"
                   />
+
                   <circle
                     cx="8.5"
                     cy="8.5"
                     r="1.5"
                   />
+
                   <polyline points="21 15 16 10 5 21" />
                 </svg>
 
               </button>
+
+              {/* File */}
 
               <button
                 type="button"
@@ -794,6 +1115,8 @@ export default function ChatView({ userData }: Props) {
 
             </div>
 
+            {/* Text input */}
+
             <input
               ref={inputRef}
               type="text"
@@ -807,7 +1130,9 @@ export default function ChatView({ userData }: Props) {
               }
               value={inputText}
               onChange={e =>
-                setInputText(e.target.value)
+                setInputText(
+                  e.target.value
+                )
               }
               onKeyDown={e => {
                 if (
@@ -822,17 +1147,23 @@ export default function ChatView({ userData }: Props) {
               aria-label="Mensaje para Faro"
             />
 
+            {/* Send */}
+
             <button
               type="button"
               className={`chat-send-btn${inputText.length > 0 ||
-                pendingAttachments.length > 0
+                pendingAttachments.length >
+                0
                 ? ' chat-send-btn--active'
                 : ''
                 }`}
-              onClick={() => handleSend()}
+              onClick={() =>
+                handleSend()
+              }
               disabled={
                 isRecording ||
-                status === 'processing'
+                status ===
+                'processing'
               }
               aria-label="Enviar mensaje"
             >
@@ -853,6 +1184,7 @@ export default function ChatView({ userData }: Props) {
                   x2="11"
                   y2="13"
                 />
+
                 <polygon points="22 2 15 22 11 13 2 9 22 2" />
               </svg>
 
@@ -864,28 +1196,40 @@ export default function ChatView({ userData }: Props) {
 
       </div>
 
-      {/* Hidden file inputs */}
+      {/* Hidden image input */}
 
       <input
         ref={imageInputRef}
         type="file"
         accept="image/*"
         multiple
-        style={{ display: 'none' }}
+        style={{
+          display: 'none',
+        }}
         onChange={e =>
-          handleFileChange(e, 'image')
+          handleFileChange(
+            e,
+            'image'
+          )
         }
         aria-label="Seleccionar imagen"
       />
+
+      {/* Hidden file input */}
 
       <input
         ref={fileInputRef}
         type="file"
         accept=".pdf,.csv,.xlsx,.docx,.txt,.jpg,.png"
         multiple
-        style={{ display: 'none' }}
+        style={{
+          display: 'none',
+        }}
         onChange={e =>
-          handleFileChange(e, 'file')
+          handleFileChange(
+            e,
+            'file'
+          )
         }
         aria-label="Seleccionar archivo"
       />
