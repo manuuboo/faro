@@ -1,11 +1,41 @@
 import { GoogleGenAI } from "@google/genai";
-import { supabaseServer } from "../src/lib/supabaseServer";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl) {
+    throw new Error(
+        "SUPABASE: VITE_SUPABASE_URL no está configurada"
+    );
+}
+
+if (!supabaseKey) {
+    throw new Error(
+        "SUPABASE: SUPABASE_SERVICE_ROLE_KEY no está configurada"
+    );
+}
+
+const supabaseServer = createClient(
+    supabaseUrl,
+    supabaseKey,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+        },
+    }
+);
 
 const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
 });
 
 export default async function handler(req: any, res: any) {
+    console.log("=================================");
+    console.log("FARO AI - NUEVA CONSULTA");
+    console.log("=================================");
+
     if (req.method !== "POST") {
         return res.status(405).json({
             error: "Method not allowed",
@@ -15,14 +45,11 @@ export default async function handler(req: any, res: any) {
     try {
         const { message, businessId } = req.body;
 
-        console.log("=================================");
-        console.log("FARO AI - NUEVA CONSULTA");
         console.log("Mensaje:", message);
         console.log("Business ID:", businessId);
-        console.log("=================================");
 
         // --------------------------------------------------
-        // Validaciones
+        // VALIDACIONES
         // --------------------------------------------------
 
         if (!message || typeof message !== "string") {
@@ -60,7 +87,8 @@ export default async function handler(req: any, res: any) {
             );
 
             return res.status(500).json({
-                error: "No se pudo obtener la información del negocio",
+                error:
+                    "No se pudo obtener la información del negocio",
                 details: businessError.message,
             });
         }
@@ -95,13 +123,6 @@ export default async function handler(req: any, res: any) {
             "Error productos:",
             productsError
         );
-
-        if (productsError) {
-            console.error(
-                "Error obteniendo productos:",
-                productsError
-            );
-        }
 
         // --------------------------------------------------
         // 3. CLIENTES
@@ -207,7 +228,7 @@ export default async function handler(req: any, res: any) {
         );
 
         // --------------------------------------------------
-        // Datos seguros
+        // DATOS SEGUROS
         // --------------------------------------------------
 
         const safeProducts = products ?? [];
@@ -221,20 +242,14 @@ export default async function handler(req: any, res: any) {
         // --------------------------------------------------
 
         const totalSales = safeSales.reduce(
-            (
-                sum: number,
-                sale: any
-            ) => {
+            (sum: number, sale: any) => {
                 return sum + Number(sale.total || 0);
             },
             0
         );
 
         const totalExpenses = safeExpenses.reduce(
-            (
-                sum: number,
-                expense: any
-            ) => {
+            (sum: number, expense: any) => {
                 return sum + Number(expense.amount || 0);
             },
             0
@@ -257,11 +272,7 @@ export default async function handler(req: any, res: any) {
 DATOS REALES DEL NEGOCIO
 
 NEGOCIO:
-${JSON.stringify(
-            business,
-            null,
-            2
-        )}
+${JSON.stringify(business, null, 2)}
 
 RESUMEN DEL NEGOCIO:
 
@@ -288,6 +299,7 @@ ${lowStockProducts.length}
 
 
 LISTA COMPLETA DE PRODUCTOS:
+
 ${JSON.stringify(
             safeProducts,
             null,
@@ -296,6 +308,7 @@ ${JSON.stringify(
 
 
 LISTA COMPLETA DE CLIENTES:
+
 ${JSON.stringify(
             safeCustomers,
             null,
@@ -304,6 +317,7 @@ ${JSON.stringify(
 
 
 VENTAS RECIENTES:
+
 ${JSON.stringify(
             safeSales,
             null,
@@ -312,6 +326,7 @@ ${JSON.stringify(
 
 
 GASTOS RECIENTES:
+
 ${JSON.stringify(
             safeExpenses,
             null,
@@ -320,6 +335,7 @@ ${JSON.stringify(
 
 
 ACTIVIDADES RECIENTES:
+
 ${JSON.stringify(
             safeActivities,
             null,
@@ -328,6 +344,7 @@ ${JSON.stringify(
 
 
 PRODUCTOS CON STOCK BAJO:
+
 ${JSON.stringify(
             lowStockProducts,
             null,
@@ -403,18 +420,14 @@ REGLAS:
 
 
 ========================================
-
 CONTEXTO DEL NEGOCIO
-
 ========================================
 
 ${businessContext}
 
 
 ========================================
-
 MENSAJE DEL USUARIO
-
 ========================================
 
 ${message}
@@ -428,10 +441,11 @@ ${message}
             "Enviando contexto a Gemini..."
         );
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash-lite",
-            contents: prompt,
-        });
+        const response =
+            await ai.models.generateContent({
+                model: "gemini-2.5-flash-lite",
+                contents: prompt,
+            });
 
         const reply =
             response.text ||
