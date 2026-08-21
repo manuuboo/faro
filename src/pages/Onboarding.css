@@ -1,0 +1,43 @@
+.onboarding-page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Frosted progress bar ─────────────────────── */
+
+.onboarding-progress {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 20;
+
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full, 9999px);
+  padding: 8px 16px;
+}
+
+.progress-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.35s ease;
+}
+
+.progress-dot--active {
+  background: #ffffff;
+  width: 24px;
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+}
+
+.progress-dot--done {
+  background: rgba(255, 255, 255, 0.7);
+}

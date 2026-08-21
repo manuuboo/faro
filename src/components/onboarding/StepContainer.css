@@ -1,0 +1,47 @@
+.step-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+
+.step-card {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  border-radius: var(--radius-xl, 28px);
+  padding: 48px 44px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, 0.08),
+    var(--shadow-xl, 0 16px 64px rgba(100,80,160,0.20));
+  animation: cardEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 520px) {
+  .step-card {
+    padding: 32px 22px;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .step-card {
+    padding: 24px 16px;
+    border-radius: 16px;
+  }
+}

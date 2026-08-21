@@ -1,0 +1,28 @@
+.tagline {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  margin: 0;
+  font-weight: 400;
+}
+
+.tagline-word {
+  color: var(--accent);
+  font-weight: 600;
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+
+.tagline-word--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tagline-word {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,0 +1,258 @@
+/* ── Shared styles for all dashboard section views ── */
+
+.section-view {
+  padding: 32px 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+  min-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.section-card {
+  background: var(--surface-bg, #ffffff);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-2xl, 28px);
+  padding: 36px 40px;
+  box-shadow: var(--shadow-sm);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-header {
+  margin-bottom: 28px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+
+.section-description {
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Coming soon / placeholder ───────────────── */
+
+.section-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 360px;
+  background: var(--surface-1);
+  border: 1.5px dashed var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 48px;
+  text-align: center;
+  margin-top: 24px;
+}
+
+.section-placeholder-icon {
+  font-size: 44px;
+  opacity: 0.9;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-placeholder-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.section-placeholder-text {
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 380px;
+  line-height: 1.6;
+}
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: var(--accent-light);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  border-radius: var(--radius-full);
+  padding: 5px 14px;
+  text-transform: uppercase;
+}
+
+/* ── Specific grids ──────────────────────────── */
+
+.clients-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.client-card {
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+
+.client-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.client-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.client-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.client-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.client-sub {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Settings Sections */
+.settings-section {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ── Responsive ─────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .section-view {
+    padding: 16px;
+    min-height: auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .section-card {
+    padding: 20px 16px;
+    border-radius: var(--radius-xl);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .section-header {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* When section-header has inline layout (flex row), stack on mobile */
+  .section-header[style*="flex"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .clients-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stack-on-mobile {
+    flex-direction: column !important;
+  }
+
+  .stack-on-mobile > * {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .section-view {
+    padding: 12px;
+  }
+
+  .section-card {
+    padding: 16px 14px;
+  }
+
+  .section-placeholder {
+    padding: 32px 16px;
+  }
+}
+

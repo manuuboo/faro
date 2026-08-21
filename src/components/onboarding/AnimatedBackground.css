@@ -1,0 +1,117 @@
+/* ── Animated atmospheric background ─────────────────────── */
+
+.animated-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+
+  /* Base deep violet environment */
+  background: radial-gradient(
+    ellipse 100% 80% at 50% 0%,
+    #1a0a3e 0%,
+    #0f0820 55%,
+    #08051a 100%
+  );
+}
+
+/* ── Gradient orbs ──────────────────────────────────────── */
+
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+/* Orb 1 — large violet, top-left */
+.bg-orb--1 {
+  width: 70vw;
+  height: 70vw;
+  max-width: 800px;
+  max-height: 800px;
+  background: radial-gradient(circle, #6d28d9 0%, #4c1d95 45%, transparent 70%);
+  top: -20%;
+  left: -15%;
+  opacity: 0.55;
+  animation: orbFloat1 25s ease-in-out infinite;
+}
+
+/* Orb 2 — lavender/pink, top-right */
+.bg-orb--2 {
+  width: 55vw;
+  height: 55vw;
+  max-width: 640px;
+  max-height: 640px;
+  background: radial-gradient(circle, #a855f7 0%, #7c3aed 40%, transparent 70%);
+  top: -10%;
+  right: -10%;
+  opacity: 0.35;
+  animation: orbFloat2 30s ease-in-out infinite;
+}
+
+/* Orb 3 — soft blue-violet, bottom-left */
+.bg-orb--3 {
+  width: 50vw;
+  height: 50vw;
+  max-width: 600px;
+  max-height: 600px;
+  background: radial-gradient(circle, #7c3aed 0%, #312e81 50%, transparent 70%);
+  bottom: -20%;
+  left: 10%;
+  opacity: 0.3;
+  animation: orbFloat3 28s ease-in-out infinite;
+}
+
+/* Orb 4 — rose/pink accent, bottom-right */
+.bg-orb--4 {
+  width: 40vw;
+  height: 40vw;
+  max-width: 500px;
+  max-height: 500px;
+  background: radial-gradient(circle, #c084fc 0%, #7c3aed 50%, transparent 70%);
+  bottom: 5%;
+  right: 5%;
+  opacity: 0.22;
+  animation: orbFloat4 22s ease-in-out infinite;
+}
+
+/* ── Keyframes ────────────────────────────────────────────── */
+
+@keyframes orbFloat1 {
+  0%   { transform: translate(0, 0) scale(1); }
+  30%  { transform: translate(4%, 6%) scale(1.06); }
+  60%  { transform: translate(-3%, 3%) scale(0.97); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes orbFloat2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(-5%, 4%) scale(1.04); }
+  55%  { transform: translate(2%, -3%) scale(0.96); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes orbFloat3 {
+  0%   { transform: translate(0, 0) scale(1); }
+  40%  { transform: translate(6%, -5%) scale(1.08); }
+  70%  { transform: translate(-2%, 2%) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes orbFloat4 {
+  0%   { transform: translate(0, 0) scale(1); }
+  35%  { transform: translate(-4%, -6%) scale(1.05); }
+  65%  { transform: translate(3%, 2%) scale(0.98); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* ── Reduced motion ───────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-orb { animation: none; }
+}

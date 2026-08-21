@@ -1,0 +1,239 @@
+/* ─── Más Menu (Bottom Sheet) ───────────────────────────────────────── */
+/* ONLY shown on mobile/tablet (≤ 1024px) */
+
+.mas-backdrop {
+  display: none;
+}
+
+.mas-sheet {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  /* Backdrop */
+  .mas-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
+    z-index: 290;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* Sheet */
+  .mas-sheet {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 300;
+    background: #ffffff;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -8px 40px rgba(103, 58, 183, 0.15);
+    padding: 12px 20px 0;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    animation: sheetUp 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+
+  @keyframes sheetUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  /* Drag handle */
+  .mas-handle {
+    width: 40px;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    margin: 0 auto 20px;
+    flex-shrink: 0;
+  }
+
+  /* User row */
+  .mas-user-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 0 20px;
+    border-bottom: 1px solid #f3f4f6;
+    margin-bottom: 20px;
+  }
+
+  .mas-user-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent, #673ab7), #9333ea);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .mas-user-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mas-user-name {
+    margin: 0 0 2px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary, #1a1a2e);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mas-user-biz {
+    margin: 0;
+    font-size: 12.5px;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mas-notif-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #f3f4f6;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4b5563;
+    transition: background 0.15s;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .mas-notif-btn:active { background: #e5e7eb; }
+
+  .mas-notif-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 16px;
+    height: 16px;
+    background: #e11d48;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    border: 2px solid white;
+  }
+
+  /* ── Section grid ── */
+  .mas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .mas-grid-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 10px;
+    background: #f9fafb;
+    border: 1.5px solid transparent;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mas-grid-item:active {
+    transform: scale(0.95);
+    background: #f0ebf9;
+  }
+
+  .mas-grid-item--active {
+    background: #ede7f6;
+    border-color: rgba(103, 58, 183, 0.3);
+  }
+
+  .mas-grid-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent, #673ab7);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .mas-grid-item--active .mas-grid-icon {
+    background: var(--accent, #673ab7);
+    color: white;
+  }
+
+  .mas-grid-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #374151;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .mas-grid-item--active .mas-grid-label {
+    color: var(--accent, #673ab7);
+  }
+
+  /* Footer */
+  .mas-footer {
+    border-top: 1px solid #f3f4f6;
+    padding: 16px 0;
+  }
+
+  .mas-footer-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px;
+    border-radius: 14px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-ui);
+  }
+
+  .mas-footer-btn--danger {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .mas-footer-btn--danger:active {
+    background: #fee2e2;
+  }
+}

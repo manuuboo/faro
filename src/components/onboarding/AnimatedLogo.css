@@ -1,0 +1,41 @@
+.faro-logo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary, #8b5cf6);
+}
+
+.faro-logo__svg {
+  display: block;
+}
+
+/* Subtle, slow rotation for the outer ring */
+.faro-logo__ring {
+  transform-origin: 16px 16px;
+  animation: logoSpin 12s linear infinite;
+}
+
+/* Inner parts remain stable */
+.faro-logo__inner,
+.faro-logo__dot {
+}
+
+@keyframes logoSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ── Inverted variant (for use on light BG) ──── */
+.faro-logo--inverted {
+  color: var(--primary-light, #c4b5fd);
+}
+.faro-logo--inverted .faro-logo__dot {
+  fill: #1e1e2d; /* Or whatever the dark BG is */
+}
+
+/* ── Reduced motion ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .faro-logo__ring { animation: none; }
+}

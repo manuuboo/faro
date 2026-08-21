@@ -1,0 +1,109 @@
+.nav-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 28px;
+  gap: 10px;
+}
+
+.nav-buttons--has-back {
+  justify-content: space-between;
+}
+
+/* ── Base button ─────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 22px;
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--t-base);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* ── Ghost (back) ────────────────────────────── */
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary, #6b6880);
+  border: 1.5px solid var(--border, rgba(139,92,246,0.12));
+}
+
+.btn-ghost:hover {
+  background: var(--accent-bg, rgba(124,58,237,0.08));
+  border-color: var(--accent, #7c3aed);
+  color: var(--accent, #7c3aed);
+}
+
+/* ── Primary (next / CTA) ────────────────────── */
+
+.btn-primary {
+  background: var(--accent, #7c3aed);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover, #6d28d9);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(124, 58, 237, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ── Finish variant ───────────────────────────── */
+
+.btn-finish {
+  background: linear-gradient(135deg, var(--accent), var(--violet-500, #8b5cf6));
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.4);
+}
+
+.btn-finish:hover:not(:disabled) {
+  box-shadow: 0 8px 28px rgba(124, 58, 237, 0.5);
+}
+
+/* ── Arrow icon ───────────────────────────────── */
+
+.btn-arrow {
+  transition: transform var(--t-base);
+  display: inline-block;
+}
+
+.btn-primary:hover:not(:disabled) .btn-arrow {
+  transform: translateX(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary:hover:not(:disabled) {
+    transform: none;
+  }
+  .btn-primary:hover:not(:disabled) .btn-arrow {
+    transform: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .nav-buttons {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .nav-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
