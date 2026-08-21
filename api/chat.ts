@@ -1,9 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
-});
-
 export default async function handler(req: any, res: any) {
     if (req.method !== "POST") {
         return res.status(405).json({
@@ -12,38 +8,49 @@ export default async function handler(req: any, res: any) {
     }
 
     try {
-        const { message } = req.body;
+        console.log("=== FARO GEMINI TEST ===");
 
-        if (!message) {
-            return res.status(400).json({
-                error: "Message is required",
+        const apiKey = process.env.GEMINI_API_KEY;
+
+        console.log(
+            "GEMINI_API_KEY presente:",
+            apiKey ? "SI" : "NO"
+        );
+
+        if (!apiKey) {
+            return res.status(500).json({
+                ok: false,
+                error: "GEMINI_API_KEY no está disponible en Vercel",
             });
         }
 
-        console.log("FARO GEMINI TEST");
-        console.log("Mensaje recibido:", message);
+        const ai = new GoogleGenAI({
+            apiKey,
+        });
+
+        console.log("GoogleGenAI inicializado");
 
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash-lite",
-            contents: message,
+            contents: "Respondé solamente: GEMINI OK",
         });
 
-        const reply =
-            response.text || "Gemini no devolvió respuesta.";
-
-        console.log("Gemini respondió correctamente");
+        console.log("Gemini respondió");
 
         return res.status(200).json({
-            reply,
+            ok: true,
+            reply: response.text || "Sin texto",
         });
     } catch (error) {
-        console.error("GEMINI ERROR:", error);
+        console.error("=== GEMINI ERROR ===");
+        console.error(error);
 
         return res.status(500).json({
+            ok: false,
             error:
                 error instanceof Error
                     ? error.message
-                    : "Error conectando con Gemini",
+                    : String(error),
         });
     }
 }
