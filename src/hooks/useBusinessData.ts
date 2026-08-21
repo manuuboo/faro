@@ -86,6 +86,20 @@ export function useBusinessData() {
   const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [invoicesLoading, setInvoicesLoading] = useState(true);
 
+  // Incrementing this counter re-triggers all Supabase data fetches.
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refreshAll = useCallback(() => {
+    setInventoryLoading(true);
+    setClientsLoading(true);
+    setSalesLoading(true);
+    setPurchasesLoading(true);
+    setActivitiesLoading(true);
+    setNotificationsLoading(true);
+    setInvoicesLoading(true);
+    setRefreshKey((k) => k + 1);
+  }, []);
+
   const businessId = getBusinessId();
 
 
@@ -134,7 +148,7 @@ export function useBusinessData() {
     };
 
     loadInventory();
-  }, [businessId]);
+  }, [businessId, refreshKey]);
 
   // ── Load Clients from Supabase ───────────────────────────────────────────
 
@@ -176,7 +190,7 @@ export function useBusinessData() {
     };
 
     loadClients();
-  }, [businessId]);
+  }, [businessId, refreshKey]);
 
   // ── Load Sales from Supabase ─────────────────────────────────────────────
 
@@ -212,7 +226,7 @@ export function useBusinessData() {
     };
 
     loadSales();
-  }, [businessId]);
+  }, [businessId, refreshKey]);
 
   // ── Load Purchases / Expenses from Supabase ──────────────────────────────
 
@@ -255,7 +269,7 @@ export function useBusinessData() {
     };
 
     loadPurchases();
-  }, [businessId]);
+  }, [businessId, refreshKey]);
 
   // ── Load Invoices from Supabase ──────────────────────────────────────────
 
@@ -310,7 +324,7 @@ export function useBusinessData() {
     };
 
     loadInvoices();
-  }, [businessId]);
+  }, [businessId, refreshKey]);
 
   // ── Load Activities from Supabase ────────────────────────────────────────
 
@@ -354,7 +368,7 @@ export function useBusinessData() {
     };
 
     loadActivities();
-  }, [businessId]);
+  }, [businessId, refreshKey]);
 
   // ── Load Notifications from Supabase ─────────────────────────────────────
 
@@ -395,7 +409,7 @@ export function useBusinessData() {
     };
 
     loadNotifications();
-  }, [businessId]);
+  }, [businessId, refreshKey]);
 
   // ── Notifications ────────────────────────────────────────────────────────
 
@@ -1754,6 +1768,9 @@ export function useBusinessData() {
     activitiesLoading,
     notificationsLoading,
     invoicesLoading,
+
+    // Refresh
+    refreshAll,
 
     // Notifications
     addNotification,

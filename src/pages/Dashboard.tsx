@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/dashboard/Sidebar';
 import HomeView from '../components/dashboard/HomeView';
@@ -37,6 +37,7 @@ export type DashboardSection =
 export default function Dashboard() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<DashboardSection>('home');
+  const activeSectionRef = useRef<DashboardSection>('home');
   const [userData, setUserData] = useState<OnboardingData | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -65,13 +66,20 @@ export default function Dashboard() {
   }, [navigate]);
 
   const handleNavigate = useCallback((section: DashboardSection) => {
+    // Refresh all data when returning to Home from any other section
+    // so changes made in ChatView (or elsewhere) are immediately visible.
+    if (section === 'home' && activeSectionRef.current !== 'home') {
+      businessContext.refreshAll();
+    }
+    activeSectionRef.current = section;
     setActiveSection(section);
     setShowNotifications(false);
     setShowProfileMenu(false);
     setShowMasMenu(false);
-  }, []);
+  }, [businessContext.refreshAll]);
 
   const handleOpenChat = useCallback(() => {
+    activeSectionRef.current = 'chat';
     setActiveSection('chat');
     setShowNotifications(false);
     setShowProfileMenu(false);
