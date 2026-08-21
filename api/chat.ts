@@ -31,7 +31,7 @@ export default async function handler(req: any, res: any) {
         console.log("GoogleGenAI inicializado");
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-3.5-flash-lite",
             contents: "Respondé solamente: GEMINI OK",
         });
 
