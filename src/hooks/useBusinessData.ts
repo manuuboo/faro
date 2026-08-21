@@ -746,7 +746,6 @@ export function useBusinessData() {
     async (
       amount: number,
       description: string,
-      supplierId?: string,
       supplierName?: string,
       productId?: string,
       quantity?: number,

@@ -14,7 +14,6 @@ import ChatView from '../components/dashboard/ChatView';
 import NotificationPanel from '../components/dashboard/NotificationPanel';
 import ProfileMenu from '../components/dashboard/ProfileMenu';
 import HelpTutorial from '../components/dashboard/HelpTutorial';
-import AnimatedLogo from '../components/onboarding/AnimatedLogo';
 import MobileBottomNav from '../components/dashboard/MobileBottomNav';
 import MasMenu from '../components/dashboard/MasMenu';
 import { getUserData, isOnboardingComplete, isTutorialComplete } from '../services/storage';
@@ -59,7 +58,7 @@ export default function Dashboard() {
       const timer = setTimeout(() => setShowTutorial(true), 800);
       return () => clearTimeout(timer);
     }
-    
+
     const handleOpenTutorial = () => setShowTutorial(true);
     window.addEventListener('open-tutorial', handleOpenTutorial);
     return () => window.removeEventListener('open-tutorial', handleOpenTutorial);
@@ -141,7 +140,7 @@ export default function Dashboard() {
           <div className="mobile-back-header">
             <button className="mobile-back-btn" onClick={() => handleNavigate('home')} aria-label="Volver al inicio">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               <span>Inicio</span>
             </button>

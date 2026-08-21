@@ -3,9 +3,9 @@ import { supabase } from '../../lib/supabase';
 export interface Customer {
     business_id: string;
     name: string;
-    phone?: string;
-    email?: string;
-    notes?: string;
+    phone?: string | null;
+    email?: string | null;
+    notes?: string | null;
 }
 
 export async function getCustomers(businessId: string) {
