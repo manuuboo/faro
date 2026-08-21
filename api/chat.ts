@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { supabaseServer } from "../src/lib/supabaseServer";
+import { supabaseServer } from "./supabaseServer";
 
 export default async function handler(req: any, res: any) {
     console.log("========== FARO API START ==========");
