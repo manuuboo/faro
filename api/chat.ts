@@ -1,9 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
-
 import { supabaseServer } from "../src/lib/supabaseServer";
 
+const apiKey = process.env.GEMINI_API_KEY;
+
+if (!apiKey) {
+    throw new Error("GEMINI_API_KEY no está configurada");
+}
+
 const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
+    apiKey,
 });
 
 export default async function handler(req: any, res: any) {
@@ -23,7 +28,7 @@ export default async function handler(req: any, res: any) {
         console.log("=================================");
 
         // --------------------------------------------------
-        // Validaciones
+        // VALIDACIONES
         // --------------------------------------------------
 
         if (!message || typeof message !== "string") {
@@ -61,8 +66,7 @@ export default async function handler(req: any, res: any) {
             );
 
             return res.status(500).json({
-                error:
-                    "No se pudo obtener la información del negocio",
+                error: "No se pudo obtener la información del negocio",
                 details: businessError.message,
             });
         }
@@ -130,6 +134,13 @@ export default async function handler(req: any, res: any) {
             customersError
         );
 
+        if (customersError) {
+            console.error(
+                "Error obteniendo clientes:",
+                customersError
+            );
+        }
+
         // --------------------------------------------------
         // 4. VENTAS
         // --------------------------------------------------
@@ -155,6 +166,13 @@ export default async function handler(req: any, res: any) {
             "Error ventas:",
             salesError
         );
+
+        if (salesError) {
+            console.error(
+                "Error obteniendo ventas:",
+                salesError
+            );
+        }
 
         // --------------------------------------------------
         // 5. GASTOS
@@ -182,6 +200,13 @@ export default async function handler(req: any, res: any) {
             expensesError
         );
 
+        if (expensesError) {
+            console.error(
+                "Error obteniendo gastos:",
+                expensesError
+            );
+        }
+
         // --------------------------------------------------
         // 6. ACTIVIDADES
         // --------------------------------------------------
@@ -208,8 +233,15 @@ export default async function handler(req: any, res: any) {
             activitiesError
         );
 
+        if (activitiesError) {
+            console.error(
+                "Error obteniendo actividades:",
+                activitiesError
+            );
+        }
+
         // --------------------------------------------------
-        // Datos seguros
+        // DATOS SEGUROS
         // --------------------------------------------------
 
         const safeProducts = products ?? [];
@@ -223,36 +255,42 @@ export default async function handler(req: any, res: any) {
         // --------------------------------------------------
 
         const totalSales = safeSales.reduce(
-            (
-                sum: number,
-                sale: any
-            ) => {
+            (sum: number, sale: any) => {
                 return sum + Number(sale.total || 0);
             },
             0
         );
 
         const totalExpenses = safeExpenses.reduce(
-            (
-                sum: number,
-                expense: any
-            ) => {
+            (sum: number, expense: any) => {
                 return sum + Number(expense.amount || 0);
             },
             0
         );
 
-        const lowStockProducts =
-            safeProducts.filter(
-                (product: any) => {
-                    return (
-                        Number(product.stock || 0) <=
-                        Number(
-                            product.minimum_stock || 0
-                        )
-                    );
-                }
-            );
+        const lowStockProducts = safeProducts.filter(
+            (product: any) => {
+                return (
+                    Number(product.stock || 0) <=
+                    Number(product.minimum_stock || 0)
+                );
+            }
+        );
+
+        console.log(
+            "Total ventas:",
+            totalSales
+        );
+
+        console.log(
+            "Total gastos:",
+            totalExpenses
+        );
+
+        console.log(
+            "Productos con stock bajo:",
+            lowStockProducts.length
+        );
 
         // --------------------------------------------------
         // 8. CONTEXTO DEL NEGOCIO
@@ -262,6 +300,7 @@ export default async function handler(req: any, res: any) {
 DATOS REALES DEL NEGOCIO
 
 NEGOCIO:
+
 ${JSON.stringify(
             business,
             null,
@@ -382,43 +421,52 @@ REGLAS:
 7. Si el usuario pregunta por gastos,
    utilizá los GASTOS RECIENTES y los totales disponibles.
 
-8. No digas que no tenés acceso al negocio si los datos aparecen
+8. Si el usuario pregunta por stock,
+   utilizá la información de PRODUCTOS y PRODUCTOS CON STOCK BAJO.
+
+9. No digas que no tenés acceso al negocio si los datos aparecen
    en el contexto.
 
-9. No menciones Supabase.
+10. No menciones Supabase.
 
-10. No menciones APIs.
+11. No menciones APIs.
 
-11. No menciones bases de datos.
+12. No menciones bases de datos.
 
-12. No menciones tablas.
+13. No menciones tablas.
 
-13. No expliques detalles técnicos.
+14. No expliques detalles técnicos.
 
-14. Respondé siempre en español.
+15. Respondé siempre en español.
 
-15. Sé directo y natural.
+16. Sé directo y natural.
 
-16. Si la pregunta puede responderse con un número,
+17. Si la pregunta puede responderse con un número,
    respondé primero con ese número.
 
-17. Si el usuario pregunta algo que no está disponible,
+18. Si el usuario pregunta algo que no está disponible,
    decilo claramente.
 
-18. No afirmes haber realizado acciones.
+19. No afirmes haber realizado acciones que no realizaste.
 
-19. En esta versión solamente podés consultar información.
+20. En esta versión solamente podés consultar información.
 
-20. Si el usuario pide registrar, modificar o eliminar algo,
+21. Si el usuario pide registrar, modificar o eliminar algo,
    explicá que todavía no podés ejecutar esa acción.
 
+22. No inventes información para completar una respuesta.
+
+23. Si hay varias cantidades relacionadas con una consulta,
+   aclarale al usuario qué representa cada una.
+
+24. Cuando sea útil, utilizá listas breves para presentar
+   productos, clientes, ventas o gastos.
 
 ========================================
 CONTEXTO DEL NEGOCIO
 ========================================
 
 ${businessContext}
-
 
 ========================================
 MENSAJE DEL USUARIO
@@ -464,10 +512,27 @@ ${message}
         );
 
         console.error(
-            "FARO AI ERROR:"
+            "FARO AI ERROR REAL:"
         );
 
-        console.error(error);
+        console.error(
+            "Error:",
+            error
+        );
+
+        console.error(
+            "Mensaje:",
+            error instanceof Error
+                ? error.message
+                : "Sin mensaje"
+        );
+
+        console.error(
+            "Stack:",
+            error instanceof Error
+                ? error.stack
+                : "Sin stack"
+        );
 
         console.error(
             "================================="
@@ -477,7 +542,7 @@ ${message}
             error:
                 error instanceof Error
                     ? error.message
-                    : "Failed to communicate with Faro AI",
+                    : "Error desconocido en Faro AI",
         });
     }
 }
